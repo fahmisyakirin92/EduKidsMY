@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDU KIDS MY - Mari Belajar!</title>
+    <title>EDU KIDS MY - Platform Pembelajaran Prasekolah</title>
     
     <script src="https://cdn.tailwindcss.com"></script>
     
@@ -15,15 +15,27 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     
     <style>
-        body {
+        :root {
+            --bg-kids: linear-gradient(135deg, #e0f2fe 0%, #fef08a 100%);
+            --bg-parent: #f5f5f7; /* Apple-style minimalist grey */
+        }
+
+        body.kids-mode {
             font-family: 'Nunito', sans-serif;
-            background: linear-gradient(135deg, #e0f2fe 0%, #fef08a 100%);
+            background: var(--bg-kids);
             min-height: 100vh;
             overflow-x: hidden;
             -webkit-tap-highlight-color: transparent;
+        }
+
+        body.parent-mode {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-parent);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
         
         .bounce-hover:hover {
@@ -56,11 +68,11 @@
         ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
     </style>
 </head>
-<body>
+<body class="kids-mode" id="body-tag">
     <div id="root"></div>
 
     <script type="text/babel">
-        // Firebase Configuration
+        // --- 1. CONFIGURATION & FIREBASE ---
         const firebaseConfig = {
             apiKey: "AIzaSyDURjNxBuaC5xMd7Py5pTOG8LmQawLnQIs",
             authDomain: "edukids-my.firebaseapp.com",
@@ -71,7 +83,6 @@
             appId: "1:684848089074:web:5bb13ac77a2f9fd8b88d6b"
         };
 
-        // Initialize Firebase
         if (!firebase.apps.length) {
             firebase.initializeApp(firebaseConfig);
         }
@@ -79,14 +90,16 @@
 
         const { useState, useEffect } = React;
 
-        // UI Components
+        // --- 2. REUSABLE UI COMPONENTS (KIDS) ---
         const Button = ({ children, color, onClick, large }) => {
             const colors = {
                 blue: "bg-blue-400 hover:bg-blue-500 shadow-blue-200",
                 green: "bg-green-400 hover:bg-green-500 shadow-green-200",
                 yellow: "bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200 text-yellow-900",
                 purple: "bg-purple-400 hover:bg-purple-500 shadow-purple-200",
-                orange: "bg-orange-400 hover:bg-orange-500 shadow-orange-200"
+                orange: "bg-orange-400 hover:bg-orange-500 shadow-orange-200",
+                red: "bg-red-400 hover:bg-red-500 shadow-red-200",
+                teal: "bg-teal-400 hover:bg-teal-500 shadow-teal-200"
             };
             const sizeClasses = large ? "text-3xl py-6 px-10 rounded-3xl" : "text-xl py-4 px-6 rounded-2xl";
             
@@ -106,130 +119,318 @@
             </div>
         );
 
-        // Screens
-        const Home = ({ setView }) => (
-            <div className="max-w-4xl mx-auto p-6 pt-12 text-center">
-                <div className="flex justify-between items-center mb-8">
-                    <div className="bg-white/80 py-2 px-6 rounded-full font-bold text-purple-600 shadow-sm border-2 border-purple-100">
-                        ⭐ 120 Bintang
+        // --- 3. UTILITIES ---
+        const playSound = (text, lang = 'ms-MY') => {
+            const utterance = new SpeechSynthesisUtterance(text);
+            utterance.lang = lang;
+            window.speechSynthesis.speak(utterance);
+        };
+
+        const playSfx = (type) => {
+            // Placeholder for sound effects (pop, win, wrong)
+            console.log(`Playing SFX: ${type}`);
+        };
+
+        // --- 4. SCREENS: KIDS MODE ---
+        const Home = ({ setView, stars }) => (
+            <div className="max-w-5xl mx-auto p-6 pt-8 text-center pop-in">
+                <div className="flex justify-between items-center mb-6">
+                    <div className="bg-white/90 py-2 px-6 rounded-full font-bold text-orange-500 shadow-sm border-2 border-orange-100 text-xl flex items-center gap-2">
+                        ⭐ <span>{stars}</span>
                     </div>
-                    <button className="bg-gray-800 text-white py-2 px-6 rounded-full font-bold hover:bg-gray-700 transition">
-                        Ibu Bapa (Parents)
+                    <button 
+                        onClick={() => setView('parent_gate')}
+                        className="bg-slate-800 text-white py-2 px-6 rounded-full font-bold hover:bg-slate-700 transition shadow-lg border-b-4 border-slate-900"
+                    >
+                        Ibu Bapa ⚙️
                     </button>
                 </div>
 
-                <div className="float text-9xl mb-6">🦉</div>
-                <h1 className="text-6xl font-black text-blue-600 mb-2 drop-shadow-md">EDU KIDS MY</h1>
-                <p className="text-2xl font-bold text-gray-600 mb-10">Jom belajar bersama Cikgu Owl!</p>
+                <div className="float text-[7rem] mb-2 leading-none">🦉</div>
+                <h1 className="text-5xl md:text-6xl font-black text-blue-600 mb-2 drop-shadow-md tracking-tight">EDU KIDS MY</h1>
+                <p className="text-xl md:text-2xl font-bold text-gray-600 mb-8 bg-white/50 inline-block px-6 py-2 rounded-full">Jom belajar bersama Cikgu Owl!</p>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <Button color="blue" large onClick={() => setView('bm')}>
-                        🅰️ Bahasa Melayu
-                    </Button>
-                    <Button color="purple" large onClick={() => setView('eng')}>
-                        🔤 English
-                    </Button>
-                    <Button color="green" large onClick={() => setView('math')}>
-                        🔢 Matematik
-                    </Button>
-                    <Button color="orange" large onClick={() => setView('rewards')}>
-                        🎁 Ganjaran Saya
-                    </Button>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+                    <Button color="blue" onClick={() => setView('bm')}>🅰️ Bahasa Melayu</Button>
+                    <Button color="purple" onClick={() => setView('eng')}>🔤 English</Button>
+                    <Button color="green" onClick={() => setView('math')}>🔢 Matematik</Button>
+                    <Button color="teal" onClick={() => setView('science')}>🔬 Sains</Button>
+                    <Button color="yellow" onClick={() => setView('islamic')}>🕌 P. Islam</Button>
+                    <Button color="orange" onClick={() => setView('rewards')}>🎁 Ganjaran</Button>
                 </div>
             </div>
         );
 
-        const LessonBM = ({ setView }) => {
+        // Lesson Engine Template
+        const InteractiveLesson = ({ title, items, lang, setView, addStars }) => {
             const [step, setStep] = useState(0);
-            
-            const words = [
-                { word: "Kucing", image: "🐱", syllables: "Ku - cing", sound: "Meow!" },
-                { word: "Nasi Lemak", image: "🍛", syllables: "Na - si  Le - mak", sound: "Sedap!" }
-            ];
-
-            const playSound = (text) => {
-                // In production, this would play actual high-quality voice audio files
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'ms-MY';
-                window.speechSynthesis.speak(utterance);
-            };
 
             const handleNext = () => {
-                if (step < words.length - 1) {
+                if (step < items.length - 1) {
                     setStep(step + 1);
                 } else {
+                    addStars(10);
                     setView('home');
                 }
             };
 
             return (
-                <div className="max-w-2xl mx-auto p-6 pt-12">
-                    <button onClick={() => setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl">
+                <div className="max-w-3xl mx-auto p-6 pt-12">
+                    <button onClick={() => setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">
                         ⬅️ Kembali
                     </button>
                     
                     <Card>
-                        <h2 className="text-3xl font-black text-center text-blue-500 mb-8">Mari Membaca!</h2>
+                        <h2 className="text-3xl font-black text-center text-blue-500 mb-8">{title}</h2>
                         
                         <div 
-                            className="text-center cursor-pointer mb-8 bounce-hover"
-                            onClick={() => playSound(words[step].word)}
+                            className="text-center cursor-pointer mb-10 bounce-hover"
+                            onClick={() => {
+                                playSound(items[step].word, lang);
+                                playSfx('pop');
+                            }}
                         >
-                            <div className="text-[8rem] mb-4 float">{words[step].image}</div>
-                            <h3 className="text-6xl font-black text-gray-800 mb-2">{words[step].word}</h3>
-                            <p className="text-3xl font-bold text-blue-400">{words[step].syllables}</p>
-                            <p className="text-sm text-gray-400 mt-4">(Tekan gambar untuk dengar)</p>
+                            <div className="text-[10rem] mb-4 float leading-none">{items[step].image}</div>
+                            <h3 className="text-6xl font-black text-gray-800 mb-4">{items[step].word}</h3>
+                            <p className="text-3xl font-bold text-blue-400 bg-blue-50 inline-block px-8 py-3 rounded-full border-2 border-blue-100">
+                                {items[step].syllables || items[step].translation}
+                            </p>
                         </div>
 
-                        <Button color="green" onClick={handleNext}>
-                            {step < words.length - 1 ? "Seterusnya ➡️" : "Tamat! 🎉"}
-                        </Button>
+                        <div className="flex justify-between items-center w-full">
+                            <div className="text-gray-400 font-bold">
+                                {step + 1} / {items.length}
+                            </div>
+                            <div className="w-2/3">
+                                <Button color="green" onClick={handleNext}>
+                                    {step < items.length - 1 ? "Seterusnya ➡️" : "Hebat! Siap! 🎉"}
+                                </Button>
+                            </div>
+                        </div>
                     </Card>
                 </div>
             );
         };
 
-        const Rewards = ({ setView }) => (
-            <div className="max-w-3xl mx-auto p-6 pt-12">
-                <button onClick={() => setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl">
+        const RewardsScreen = ({ setView, stars }) => (
+            <div className="max-w-4xl mx-auto p-6 pt-12">
+                <button onClick={() => setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">
                     ⬅️ Kembali
                 </button>
                 
                 <Card>
-                    <h2 className="text-4xl font-black text-center text-orange-500 mb-8">Peti Harta Karun! 🏴‍☠️</h2>
+                    <div className="text-center mb-8">
+                        <h2 className="text-4xl font-black text-orange-500 mb-2">Peti Harta Karun! 🏴‍☠️</h2>
+                        <p className="text-2xl font-bold text-gray-600">Bintang Anda: <span className="text-orange-500">⭐ {stars}</span></p>
+                    </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                        <div className="bg-orange-50 p-6 rounded-3xl border-2 border-orange-200 text-center">
-                            <div className="text-6xl mb-4">🏆</div>
-                            <h3 className="text-2xl font-bold text-gray-800">Lencana Bijak</h3>
-                            <p className="text-orange-600 font-bold">Dibuka!</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div className="bg-orange-50 p-6 rounded-[2rem] border-4 border-orange-200 text-center relative overflow-hidden">
+                            <div className="absolute top-0 right-0 bg-green-500 text-white font-bold py-1 px-4 rounded-bl-xl">Buka!</div>
+                            <div className="text-7xl mb-4 mt-4">🏆</div>
+                            <h3 className="text-2xl font-bold text-gray-800">Lencana Juara</h3>
+                            <p className="text-gray-500 mt-2">Diberikan untuk usaha gigih!</p>
                         </div>
                         
-                        <div className="bg-blue-50 p-6 rounded-3xl border-2 border-blue-200 text-center">
-                            <div className="text-6xl mb-4">🖨️</div>
-                            <h3 className="text-2xl font-bold text-gray-800">Keychain Cikgu Owl</h3>
-                            <p className="text-sm text-gray-600 mt-2 mb-3">Ganjaran Fizikal Ibu Bapa</p>
-                            <button className="bg-blue-500 text-white font-bold py-2 px-4 rounded-xl text-sm w-full hover:bg-blue-600 transition">
-                                Muat Turun Fail 3MF/STL
+                        <div className="bg-blue-50 p-6 rounded-[2rem] border-4 border-blue-200 text-center relative">
+                            <div className="absolute top-0 right-0 bg-blue-500 text-white font-bold py-1 px-4 rounded-bl-xl text-xs">Premium</div>
+                            <div className="text-7xl mb-4 mt-4">🖨️</div>
+                            <h3 className="text-2xl font-bold text-gray-800">Fail Cetakan 3D</h3>
+                            <p className="text-sm text-gray-600 mt-2 mb-4">Set Huruf Abjad Interaktif. Dioptimumkan untuk build plate 256x256x256mm.</p>
+                            <button className="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-700 transition shadow-lg">
+                                Muat Turun (3MF)
                             </button>
-                            <p className="text-xs text-gray-400 mt-2">Sesuai untuk build plate 256x256x256mm</p>
                         </div>
                     </div>
                 </Card>
             </div>
         );
 
-        // Main App Component
-        const App = () => {
-            const [view, setView] = useState('home');
+        // --- 5. SCREENS: PARENT MODE (Ultra Clean, Minimalist, Apple-Style) ---
+        const ParentGate = ({ setView }) => {
+            const [pin, setPin] = useState('');
+            const correctPin = '1234'; // Simulated PIN
+
+            const handlePin = (num) => {
+                const newPin = pin + num;
+                setPin(newPin);
+                if (newPin.length === 4) {
+                    if (newPin === correctPin) {
+                        document.getElementById('body-tag').classList.remove('kids-mode');
+                        document.getElementById('body-tag').classList.add('parent-mode');
+                        setView('parent_dashboard');
+                    } else {
+                        alert('PIN Salah. (Sila guna 1234)');
+                        setPin('');
+                    }
+                }
+            };
 
             return (
-                <div className="min-h-screen relative">
-                    {view === 'home' && <Home setView={setView} />}
-                    {view === 'bm' && <LessonBM setView={setView} />}
-                    {view === 'eng' && <div className="p-12 text-center text-2xl font-bold pop-in"><button onClick={()=>setView('home')}>⬅️ Back</button><br/><br/>English Module Loading...</div>}
-                    {view === 'math' && <div className="p-12 text-center text-2xl font-bold pop-in"><button onClick={()=>setView('home')}>⬅️ Kembali</button><br/><br/>Modul Matematik Sedang Dimuatkan...</div>}
-                    {view === 'rewards' && <Rewards setView={setView} />}
+                <div className="min-h-screen flex items-center justify-center bg-white/80 backdrop-blur-md fixed inset-0 z-50">
+                    <div className="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full text-center pop-in border border-gray-100">
+                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Akses Ibu Bapa</h2>
+                        <p className="text-gray-500 mb-8">Sila masukkan PIN (1234)</p>
+                        
+                        <div className="flex justify-center gap-4 mb-8">
+                            {[0,1,2,3].map(i => (
+                                <div key={i} className={`w-4 h-4 rounded-full ${pin.length > i ? 'bg-slate-800' : 'bg-gray-200'}`}></div>
+                            ))}
+                        </div>
+
+                        <div className="grid grid-cols-3 gap-4 mb-6">
+                            {[1,2,3,4,5,6,7,8,9].map(num => (
+                                <button key={num} onClick={() => handlePin(num)} className="w-16 h-16 rounded-full bg-gray-50 text-2xl font-bold text-gray-800 hover:bg-gray-200 mx-auto transition">
+                                    {num}
+                                </button>
+                            ))}
+                            <div></div>
+                            <button onClick={() => handlePin(0)} className="w-16 h-16 rounded-full bg-gray-50 text-2xl font-bold text-gray-800 hover:bg-gray-200 mx-auto transition">0</button>
+                            <button onClick={() => setView('home')} className="w-16 h-16 rounded-full text-red-500 font-bold hover:bg-red-50 mx-auto transition">Batal</button>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const ParentDashboard = ({ setView }) => {
+            const exitDashboard = () => {
+                document.getElementById('body-tag').classList.remove('parent-mode');
+                document.getElementById('body-tag').classList.add('kids-mode');
+                setView('home');
+            };
+
+            return (
+                <div className="max-w-6xl mx-auto p-8 pt-12 pop-in">
+                    <div className="flex justify-between items-center mb-12">
+                        <div>
+                            <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">Parent Dashboard</h1>
+                            <p className="text-gray-500 mt-1">Overview of your child's learning progress.</p>
+                        </div>
+                        <button onClick={exitDashboard} className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition">
+                            Done
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                        {/* Stats Cards */}
+                        <div className="lg:col-span-2 grid grid-cols-2 gap-6">
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col justify-center">
+                                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Screen Time Today</h3>
+                                <p className="text-4xl font-semibold text-gray-900">45 <span className="text-xl text-gray-400 font-normal">min</span></p>
+                                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-4"><div className="bg-green-500 w-2/3 h-1.5 rounded-full"></div></div>
+                            </div>
+                            <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col justify-center">
+                                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Modules Completed</h3>
+                                <p className="text-4xl font-semibold text-gray-900">12</p>
+                                <p className="text-sm text-green-500 mt-4">↑ 3 more than last week</p>
+                            </div>
+                        </div>
+
+                        {/* Recent Activity */}
+                        <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 row-span-2">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Activity</h3>
+                            <div className="space-y-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">🅰️</div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">Suku Kata Mudah (BM)</p>
+                                        <p className="text-xs text-gray-500">Completed with 100% score</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">🔤</div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">English Vocabulary</p>
+                                        <p className="text-xs text-gray-500">Learned 3 new words</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">⭐</div>
+                                    <div>
+                                        <p className="text-sm font-medium text-gray-900">Earned Champion Badge</p>
+                                        <p className="text-xs text-gray-500">Reward unlocked</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Content Management / 3D Resources */}
+                        <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
+                            <div className="flex justify-between items-center mb-6">
+                                <h3 className="text-lg font-semibold text-gray-900">Physical Learning Resources</h3>
+                                <span className="px-3 py-1 bg-black text-white text-xs font-medium rounded-full">Premium</span>
+                            </div>
+                            <p className="text-sm text-gray-500 mb-6 max-w-xl">Download and 3D print educational tools directly from the curriculum. All models are pre-sliced and optimized for 256x256x256mm build plates to ensure perfect dimensional accuracy for interlocking parts.</p>
+                            
+                            <table className="w-full text-left border-collapse">
+                                <thead>
+                                    <tr className="border-b border-gray-100">
+                                        <th className="py-3 text-xs font-medium text-gray-400 uppercase">Resource Name</th>
+                                        <th className="py-3 text-xs font-medium text-gray-400 uppercase">Format</th>
+                                        <th className="py-3 text-xs font-medium text-gray-400 uppercase text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr className="border-b border-gray-50 hover:bg-gray-50/50 transition">
+                                        <td className="py-4 text-sm font-medium text-gray-900">KSPK Alphabet Blocks Set</td>
+                                        <td className="py-4 text-sm text-gray-500">.3MF (Multi-color)</td>
+                                        <td className="py-4 text-right"><button className="text-blue-600 font-medium text-sm hover:underline">Download</button></td>
+                                    </tr>
+                                    <tr className="hover:bg-gray-50/50 transition">
+                                        <td className="py-4 text-sm font-medium text-gray-900">Fractions Puzzle Board</td>
+                                        <td className="py-4 text-sm text-gray-500">.STL (Single)</td>
+                                        <td className="py-4 text-right"><button className="text-blue-600 font-medium text-sm hover:underline">Download</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- 6. MAIN APP ROUTER ---
+        const App = () => {
+            const [view, setView] = useState('home');
+            const [stars, setStars] = useState(120);
+
+            const addStars = (amount) => setStars(prev => prev + amount);
+
+            // Data Kandungan Pembelajaran
+            const lessonData = {
+                bm: [
+                    { word: "Kucing", image: "🐱", syllables: "Ku - cing" },
+                    { word: "Nasi Lemak", image: "🍛", syllables: "Na - si  Le - mak" },
+                    { word: "Buku", image: "📖", syllables: "Bu - ku" }
+                ],
+                eng: [
+                    { word: "Apple", image: "🍎", translation: "Epal" },
+                    { word: "Cat", image: "🐱", translation: "Kucing" },
+                    { word: "Sun", image: "☀️", translation: "Matahari" }
+                ],
+                math: [
+                    { word: "Satu", image: "1️⃣", translation: "One Apple 🍎" },
+                    { word: "Dua", image: "2️⃣", translation: "Two Cats 🐱🐱" },
+                    { word: "Tiga", image: "3️⃣", translation: "Three Stars ⭐⭐⭐" }
+                ]
+            };
+
+            return (
+                <div className="relative">
+                    {view === 'home' && <Home setView={setView} stars={stars} />}
+                    
+                    {view === 'bm' && <InteractiveLesson title="Mari Membaca (BM)" items={lessonData.bm} lang="ms-MY" setView={setView} addStars={addStars} />}
+                    {view === 'eng' && <InteractiveLesson title="Let's Learn English" items={lessonData.eng} lang="en-US" setView={setView} addStars={addStars} />}
+                    {view === 'math' && <InteractiveLesson title="Jom Mengira" items={lessonData.math} lang="ms-MY" setView={setView} addStars={addStars} />}
+                    
+                    {view === 'science' && <div className="p-12 text-center text-2xl font-bold pop-in"><button onClick={()=>setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">⬅️ Kembali</button><br/><br/>Modul Sains Sedang Dibina... 🔬</div>}
+                    {view === 'islamic' && <div className="p-12 text-center text-2xl font-bold pop-in"><button onClick={()=>setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">⬅️ Kembali</button><br/><br/>Modul P. Islam Sedang Dibina... 🕌</div>}
+                    
+                    {view === 'rewards' && <RewardsScreen setView={setView} stars={stars} />}
+                    
+                    {view === 'parent_gate' && <ParentGate setView={setView} />}
+                    {view === 'parent_dashboard' && <ParentDashboard setView={setView} />}
                 </div>
             );
         };
