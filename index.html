@@ -2,77 +2,271 @@
 <html lang="ms">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDU KIDS MY - Platform Pembelajaran Prasekolah</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>EDU KIDS MY - Belajar, Bermain dan Membesar Bersama</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brandBlue: '#3B82F6', brandYellow: '#FACC15', brandGreen: '#22C55E', 
+                        brandOrange: '#F97316', brandPurple: '#A855F7',
+                        bgSoft: '#F0F9FF'
+                    },
+                    fontFamily: {
+                        sans: ['Quicksand', 'sans-serif'],
+                        display: ['Fredoka One', 'cursive']
+                    }
+                }
+            }
+        }
+    </script>
 
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;900&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
-    
     <style>
-        :root {
-            --bg-kids: linear-gradient(135deg, #e0f2fe 0%, #fef08a 100%);
-            --bg-parent: #f5f5f7; /* Apple-style minimalist grey */
-        }
-
-        body.kids-mode {
-            font-family: 'Nunito', sans-serif;
-            background: var(--bg-kids);
-            min-height: 100vh;
-            overflow-x: hidden;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        body.parent-mode {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-parent);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
+        /* Custom UI Styles */
+        body { background-color: #F0F9FF; color: #333; -webkit-tap-highlight-color: transparent; }
+        .hidden-page { display: none !important; }
+        .btn-child { transition: transform 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+        .btn-child:active { transform: scale(0.95); }
+        .card-shadow { box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
         
-        .bounce-hover:hover {
-            transform: translateY(-5px) scale(1.02);
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .pop-in {
-            animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-        }
-
-        @keyframes popIn {
-            0% { transform: scale(0.8); opacity: 0; }
-            100% { transform: scale(1); opacity: 1; }
-        }
-
-        .float {
-            animation: floating 3s ease-in-out infinite;
-        }
-
-        @keyframes floating {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-            100% { transform: translateY(0px); }
-        }
+        /* Animations */
+        @keyframes bounce-soft { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+        .animate-bounce-soft { animation: bounce-soft 2s infinite; }
         
-        /* Ultra clean scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        /* Modal & Loader */
+        #loader { background: rgba(255,255,255,0.9); z-index: 9999; }
+        .toast { transition: opacity 0.3s, transform 0.3s; transform: translateY(100%); opacity: 0; }
+        .toast.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
-<body class="kids-mode" id="body-tag">
-    <div id="root"></div>
+<body class="antialiased font-sans flex flex-col min-h-screen">
 
-    <script type="text/babel">
-        // --- 1. CONFIGURATION & FIREBASE ---
+    <div id="loader" class="hidden-page fixed inset-0 flex flex-col items-center justify-center">
+        <i class="fas fa-spinner fa-spin text-6xl text-brandBlue mb-4"></i>
+        <h2 class="text-2xl font-display text-brandPurple" id="loader-text">Memuatkan...</h2>
+    </div>
+
+    <div id="toast" class="toast fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg z-50 flex items-center space-x-3">
+        <i id="toast-icon" class="fas fa-info-circle"></i>
+        <span id="toast-msg" class="font-semibold">Mesej di sini</span>
+    </div>
+
+    <div id="app-container" class="flex-grow w-full max-w-md mx-auto sm:max-w-4xl bg-white shadow-2xl overflow-hidden relative">
+
+        <div id="page-landing" class="page h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-blue-200 text-center">
+            <div class="mb-8 animate-bounce-soft">
+                <i class="fas fa-rocket text-8xl text-brandBlue drop-shadow-md"></i>
+            </div>
+            <h1 class="font-display text-5xl text-brandPurple mb-2 drop-shadow-sm">EDU KIDS MY</h1>
+            <p class="text-lg text-gray-700 font-semibold mb-8">Belajar, Bermain dan Membesar Bersama</p>
+            
+            <div class="w-full max-w-xs space-y-4">
+                <button onclick="showPage('page-login')" class="w-full btn-child bg-brandYellow hover:bg-yellow-500 text-gray-900 font-bold text-xl py-4 rounded-3xl border-b-4 border-yellow-600">
+                    <i class="fas fa-play mr-2"></i> Mula Belajar
+                </button>
+                <div class="flex justify-center space-x-4 pt-4">
+                    <button onclick="switchLanguage('BM')" class="px-4 py-2 bg-brandGreen text-white font-bold rounded-full border-b-4 border-green-700 btn-child">BM</button>
+                    <button onclick="switchLanguage('EN')" class="px-4 py-2 bg-gray-300 text-gray-700 font-bold rounded-full border-b-4 border-gray-400 btn-child">EN</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-login" class="page hidden-page h-full flex flex-col p-6 overflow-y-auto">
+            <button onclick="showPage('page-landing')" class="self-start text-gray-500 hover:text-brandBlue text-xl mb-4"><i class="fas fa-arrow-left"></i> Kembali</button>
+            
+            <h2 class="font-display text-3xl text-brandBlue mb-6 text-center">Log Masuk</h2>
+            
+            <div class="space-y-4 mb-8 border-b-2 pb-6 border-dashed border-gray-300">
+                <p class="text-center text-gray-500 text-sm mb-4 font-bold"><i class="fas fa-info-circle text-brandOrange"></i> Mod Demo (Tanpa Firebase)</p>
+                <button onclick="demoLogin('child')" class="w-full btn-child bg-brandGreen text-white font-bold text-lg py-3 rounded-2xl border-b-4 border-green-700"><i class="fas fa-child mr-2"></i> Masuk Sebagai Kanak-Kanak</button>
+                <button onclick="demoLogin('parent')" class="w-full btn-child bg-brandPurple text-white font-bold text-lg py-3 rounded-2xl border-b-4 border-purple-700"><i class="fas fa-user-friends mr-2"></i> Masuk Sebagai Ibu Bapa</button>
+                <button onclick="demoLogin('teacher')" class="w-full btn-child bg-brandOrange text-white font-bold text-lg py-3 rounded-2xl border-b-4 border-orange-700"><i class="fas fa-chalkboard-teacher mr-2"></i> Masuk Sebagai Guru</button>
+                <button onclick="demoLogin('admin')" class="w-full btn-child bg-gray-800 text-white font-bold text-lg py-3 rounded-2xl border-b-4 border-gray-900"><i class="fas fa-cog mr-2"></i> Masuk Sebagai Admin</button>
+            </div>
+
+            <form onsubmit="handleFirebaseLogin(event)" class="space-y-4">
+                <p class="text-center text-gray-500 text-sm mb-4 font-bold">Log Masuk Sistem Sebenar</p>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">E-mel</label>
+                    <input type="email" id="login-email" class="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-brandBlue focus:outline-none text-lg" placeholder="Masukkan e-mel">
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">Kata Laluan</label>
+                    <input type="password" id="login-pwd" class="w-full p-4 rounded-xl border-2 border-gray-200 focus:border-brandBlue focus:outline-none text-lg" placeholder="Masukkan kata laluan">
+                </div>
+                <button type="submit" class="w-full bg-brandBlue text-white font-bold text-xl py-4 rounded-xl border-b-4 border-blue-700 btn-child">Log Masuk Firebase</button>
+            </form>
+        </div>
+
+        <div id="page-child-dashboard" class="page hidden-page h-full flex flex-col bg-bgSoft overflow-y-auto pb-24">
+            <div class="bg-brandBlue text-white p-6 rounded-b-3xl shadow-lg flex justify-between items-center relative z-10">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-4xl border-4 border-brandYellow shadow-inner">
+                        🦖 </div>
+                    <div>
+                        <h2 class="font-display text-2xl" id="cd-greeting">Hai, Aiman!</h2>
+                        <p class="text-blue-100 font-bold text-sm">Tahap 3 • Pakar Nombor</p>
+                    </div>
+                </div>
+                <div class="text-right flex flex-col items-end">
+                    <div class="bg-brandYellow text-yellow-900 px-3 py-1 rounded-full font-bold flex items-center shadow">
+                        <i class="fas fa-star text-orange-500 mr-1"></i> <span id="cd-stars">120</span>
+                    </div>
+                    <button onclick="logoutUser()" class="mt-2 text-xs text-blue-200 hover:text-white underline"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                </div>
+            </div>
+
+            <div class="p-6 space-y-6">
+                <h3 class="font-display text-xl text-gray-700">Jom Belajar Hari Ini!</h3>
+                
+                <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                    <div onclick="startModule('bm')" class="bg-brandGreen text-white p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden">
+                        <i class="fas fa-book-open text-4xl mb-2 opacity-90"></i>
+                        <h4 class="font-bold text-lg">Bahasa<br>Melayu</h4>
+                        <div class="absolute -bottom-4 -right-4 w-16 h-16 bg-white opacity-20 rounded-full"></div>
+                    </div>
+                    <div onclick="showToast('Modul English dibuka', 'success')" class="bg-brandPurple text-white p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden">
+                        <i class="fas fa-language text-4xl mb-2 opacity-90"></i>
+                        <h4 class="font-bold text-lg">English</h4>
+                    </div>
+                    <div onclick="showToast('Modul Matematik dibuka', 'success')" class="bg-brandOrange text-white p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden">
+                        <i class="fas fa-calculator text-4xl mb-2 opacity-90"></i>
+                        <h4 class="font-bold text-lg">Matematik</h4>
+                    </div>
+                    <div onclick="showPage('page-games')" class="bg-brandYellow text-gray-900 p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden border-2 border-yellow-400">
+                        <i class="fas fa-gamepad text-4xl mb-2 opacity-90 text-orange-500"></i>
+                        <h4 class="font-bold text-lg">Main Permainan</h4>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl card-shadow border-2 border-blue-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="bg-blue-100 p-3 rounded-xl text-brandBlue text-2xl"><i class="fas fa-trophy"></i></div>
+                        <div>
+                            <h4 class="font-bold text-gray-800">Cabaran Harian</h4>
+                            <p class="text-sm text-gray-500">Selesaikan 1 Kuiz</p>
+                        </div>
+                    </div>
+                    <button class="bg-brandBlue text-white px-4 py-2 rounded-xl font-bold btn-child">Mula</button>
+                </div>
+            </div>
+            
+            <div class="fixed bottom-0 w-full max-w-md sm:max-w-4xl bg-white border-t-2 border-gray-100 flex justify-around p-3 pb-6 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
+                <button class="flex flex-col items-center text-brandBlue"><i class="fas fa-home text-2xl mb-1"></i><span class="text-xs font-bold">Utama</span></button>
+                <button onclick="showPage('page-games')" class="flex flex-col items-center text-gray-400 hover:text-brandYellow transition-colors"><i class="fas fa-puzzle-piece text-2xl mb-1"></i><span class="text-xs font-bold">Permainan</span></button>
+                <button class="flex flex-col items-center text-gray-400 hover:text-brandOrange transition-colors"><i class="fas fa-medal text-2xl mb-1"></i><span class="text-xs font-bold">Lencana</span></button>
+                <button class="flex flex-col items-center text-gray-400 hover:text-brandPurple transition-colors"><i class="fas fa-user text-2xl mb-1"></i><span class="text-xs font-bold">Profil</span></button>
+            </div>
+        </div>
+
+        <div id="page-lesson" class="page hidden-page h-full flex flex-col bg-white overflow-hidden">
+            <div class="p-4 flex justify-between items-center bg-brandGreen text-white rounded-b-2xl shadow">
+                <button onclick="showPage('page-child-dashboard')" class="text-2xl"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-display text-xl">Mengenal Haiwan</h2>
+                <div class="bg-green-800 px-3 py-1 rounded-full text-sm font-bold"><i class="fas fa-star text-brandYellow"></i> <span id="quiz-stars">0</span></div>
+            </div>
+
+            <div class="flex-grow flex flex-col items-center justify-center p-6 text-center">
+                <h3 class="text-2xl font-bold text-gray-700 mb-6" id="quiz-question">Haiwan apakah ini?</h3>
+                
+                <div class="w-48 h-48 bg-gray-100 rounded-3xl mb-8 flex items-center justify-center shadow-inner text-8xl" id="quiz-visual">
+                    🐱
+                </div>
+                
+                <div class="w-full grid grid-cols-2 gap-4" id="quiz-options">
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandBlue hover:bg-blue-50">Anjing</button>
+                    <button onclick="checkAnswer(true, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandBlue hover:bg-blue-50">Kucing</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandBlue hover:bg-blue-50">Arnab</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandBlue hover:bg-blue-50">Singa</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-parent-dashboard" class="page hidden-page h-full flex flex-col bg-gray-50 overflow-y-auto">
+            <div class="bg-brandPurple text-white p-6 shadow-md">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="font-bold text-xl"><i class="fas fa-user-friends mr-2"></i> Portal Ibu Bapa</h2>
+                    <button onclick="logoutUser()" class="text-sm bg-purple-800 px-3 py-1 rounded-lg hover:bg-purple-900"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+                </div>
+                <h3 class="text-2xl font-display">Puan Sarah</h3>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="bg-white rounded-xl card-shadow p-4 border border-gray-100 flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">🦖</div>
+                        <div>
+                            <h4 class="font-bold text-lg text-gray-800">Aiman</h4>
+                            <p class="text-sm text-gray-500">Umur: 5 Tahun • <span class="text-brandOrange font-bold"><i class="fas fa-star"></i> 120 Bintang</span></p>
+                        </div>
+                    </div>
+                    <button class="text-brandBlue"><i class="fas fa-chevron-right"></i></button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl card-shadow border border-gray-100 text-center">
+                        <i class="fas fa-clock text-3xl text-brandGreen mb-2"></i>
+                        <p class="text-sm text-gray-500">Masa Belajar</p>
+                        <p class="text-xl font-bold text-gray-800">4.5 Jam</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl card-shadow border border-gray-100 text-center">
+                        <i class="fas fa-check-circle text-3xl text-brandBlue mb-2"></i>
+                        <p class="text-sm text-gray-500">Modul Selesai</p>
+                        <p class="text-xl font-bold text-gray-800">12 Topik</p>
+                    </div>
+                </div>
+
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <h4 class="font-bold text-brandBlue mb-2"><i class="fas fa-shield-alt mr-2"></i>Kawalan Ibu Bapa</h4>
+                    <p class="text-sm text-gray-600 mb-4">Tetapkan masa skrin atau ubah PIN untuk akaun kanak-kanak.</p>
+                    <button onclick="showToast('Fungsi tetapan dibuka', 'info')" class="w-full bg-white text-brandBlue font-bold py-2 rounded-lg shadow border border-blue-200">Tetapan Profil Anak</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="page-admin-dashboard" class="page hidden-page h-full flex flex-col bg-gray-100 overflow-y-auto">
+            <div class="bg-gray-800 text-white p-6 shadow-md flex justify-between items-center">
+                <h2 class="font-bold text-xl"><i class="fas fa-cogs mr-2"></i> Admin Panel</h2>
+                <button onclick="logoutUser()" class="text-sm bg-gray-700 px-3 py-1 rounded-lg"><i class="fas fa-sign-out-alt"></i> Keluar</button>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-brandBlue">
+                        <p class="text-sm text-gray-500">Jumlah Pengguna</p>
+                        <p class="text-3xl font-bold text-gray-800">1,204</p>
+                    </div>
+                    <div class="bg-white p-4 rounded-xl shadow border-l-4 border-brandGreen">
+                        <p class="text-sm text-gray-500">Kanak-kanak</p>
+                        <p class="text-3xl font-bold text-gray-800">850</p>
+                    </div>
+                </div>
+                
+                <button onclick="showToast('Menu Pengurusan Modul', 'info')" class="w-full bg-white p-4 rounded-xl shadow flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center text-gray-700 font-bold"><i class="fas fa-book mr-3 text-brandPurple"></i> Urus Modul Pembelajaran</div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+                <button onclick="showToast('Menu Pengurusan Pengguna', 'info')" class="w-full bg-white p-4 rounded-xl shadow flex items-center justify-between hover:bg-gray-50">
+                    <div class="flex items-center text-gray-700 font-bold"><i class="fas fa-users mr-3 text-brandBlue"></i> Urus Pengguna</div>
+                    <i class="fas fa-chevron-right text-gray-400"></i>
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 1. FIREBASE CONFIGURATION ---
         const firebaseConfig = {
             apiKey: "AIzaSyDURjNxBuaC5xMd7Py5pTOG8LmQawLnQIs",
             authDomain: "edukids-my.firebaseapp.com",
@@ -83,360 +277,137 @@
             appId: "1:684848089074:web:5bb13ac77a2f9fd8b88d6b"
         };
 
-        if (!firebase.apps.length) {
+        // Initialize Firebase safely
+        let auth, db;
+        try {
             firebase.initializeApp(firebaseConfig);
+            auth = firebase.auth();
+            db = firebase.firestore();
+            console.log("Firebase initialized successfully.");
+        } catch (error) {
+            console.error("Firebase init error (using Local Storage fallback): ", error);
         }
-        const database = firebase.database();
 
-        const { useState, useEffect } = React;
+        // --- 2. APP STATE & LOCAL STORAGE FALLBACK ---
+        let appState = {
+            lang: localStorage.getItem('lang') || 'BM',
+            currentUser: JSON.parse(localStorage.getItem('user')) || null,
+            childData: { name: 'Aiman', stars: 120, level: 3 } // Demo data
+        };
 
-        // --- 2. REUSABLE UI COMPONENTS (KIDS) ---
-        const Button = ({ children, color, onClick, large }) => {
-            const colors = {
-                blue: "bg-blue-400 hover:bg-blue-500 shadow-blue-200",
-                green: "bg-green-400 hover:bg-green-500 shadow-green-200",
-                yellow: "bg-yellow-400 hover:bg-yellow-500 shadow-yellow-200 text-yellow-900",
-                purple: "bg-purple-400 hover:bg-purple-500 shadow-purple-200",
-                orange: "bg-orange-400 hover:bg-orange-500 shadow-orange-200",
-                red: "bg-red-400 hover:bg-red-500 shadow-red-200",
-                teal: "bg-teal-400 hover:bg-teal-500 shadow-teal-200"
-            };
-            const sizeClasses = large ? "text-3xl py-6 px-10 rounded-3xl" : "text-xl py-4 px-6 rounded-2xl";
+        // --- 3. UI FUNCTIONS ---
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(page => page.classList.add('hidden-page'));
+            document.getElementById(pageId).classList.remove('hidden-page');
+            window.scrollTo(0,0);
+        }
+
+        function showLoading(text = "Memuatkan...") {
+            document.getElementById('loader-text').innerText = text;
+            document.getElementById('loader').classList.remove('hidden-page');
+        }
+
+        function hideLoading() {
+            document.getElementById('loader').classList.add('hidden-page');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            const msgEl = document.getElementById('toast-msg');
+            const iconEl = document.getElementById('toast-icon');
             
-            return (
-                <button 
-                    onClick={onClick}
-                    className={`font-bold text-white shadow-xl ${colors[color]} ${sizeClasses} bounce-hover border-b-4 border-black/10 w-full transition-all`}
-                >
-                    {children}
-                </button>
-            );
-        };
+            msgEl.innerText = message;
+            iconEl.className = type === 'success' ? 'fas fa-check-circle text-green-400' : 'fas fa-info-circle text-blue-400';
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
 
-        const Card = ({ children }) => (
-            <div className="bg-white/90 backdrop-blur-sm p-8 rounded-[2.5rem] shadow-2xl border-4 border-white pop-in">
-                {children}
-            </div>
-        );
+        function switchLanguage(lang) {
+            appState.lang = lang;
+            localStorage.setItem('lang', lang);
+            showToast(lang === 'BM' ? 'Bahasa ditukar ke Bahasa Melayu' : 'Language switched to English', 'success');
+            // Nota: Implementasi penuh akan memuat semula label JSON untuk semua teks.
+        }
 
-        // --- 3. UTILITIES ---
-        const playSound = (text, lang = 'ms-MY') => {
-            const utterance = new SpeechSynthesisUtterance(text);
-            utterance.lang = lang;
-            window.speechSynthesis.speak(utterance);
-        };
+        // --- 4. AUTHENTICATION & DEMO LOGIN ---
+        function demoLogin(role) {
+            showLoading("Mengelog masuk...");
+            setTimeout(() => {
+                let user = { uid: 'demo_' + role, role: role };
+                appState.currentUser = user;
+                localStorage.setItem('user', JSON.stringify(user));
+                hideLoading();
+                routeUser(role);
+                showToast("Log masuk berjaya!", "success");
+            }, 800);
+        }
 
-        const playSfx = (type) => {
-            // Placeholder for sound effects (pop, win, wrong)
-            console.log(`Playing SFX: ${type}`);
-        };
+        function handleFirebaseLogin(e) {
+            e.preventDefault();
+            showLoading();
+            // Fallback since we are not connecting real auth in demo HTML easily without real credentials
+            setTimeout(() => {
+                hideLoading();
+                showToast("Ini adalah demo. Sila gunakan butang Demo untuk melihat UI.", "info");
+            }, 1000);
+        }
 
-        // --- 4. SCREENS: KIDS MODE ---
-        const Home = ({ setView, stars }) => (
-            <div className="max-w-5xl mx-auto p-6 pt-8 text-center pop-in">
-                <div className="flex justify-between items-center mb-6">
-                    <div className="bg-white/90 py-2 px-6 rounded-full font-bold text-orange-500 shadow-sm border-2 border-orange-100 text-xl flex items-center gap-2">
-                        ⭐ <span>{stars}</span>
-                    </div>
-                    <button 
-                        onClick={() => setView('parent_gate')}
-                        className="bg-slate-800 text-white py-2 px-6 rounded-full font-bold hover:bg-slate-700 transition shadow-lg border-b-4 border-slate-900"
-                    >
-                        Ibu Bapa ⚙️
-                    </button>
-                </div>
+        function logoutUser() {
+            appState.currentUser = null;
+            localStorage.removeItem('user');
+            if(auth) auth.signOut();
+            showToast("Berjaya log keluar", "success");
+            showPage('page-landing');
+        }
 
-                <div className="float text-[7rem] mb-2 leading-none">🦉</div>
-                <h1 className="text-5xl md:text-6xl font-black text-blue-600 mb-2 drop-shadow-md tracking-tight">EDU KIDS MY</h1>
-                <p className="text-xl md:text-2xl font-bold text-gray-600 mb-8 bg-white/50 inline-block px-6 py-2 rounded-full">Jom belajar bersama Cikgu Owl!</p>
+        function routeUser(role) {
+            if (role === 'child') showPage('page-child-dashboard');
+            else if (role === 'parent') showPage('page-parent-dashboard');
+            else if (role === 'admin') showPage('page-admin-dashboard');
+            else if (role === 'teacher') showPage('page-admin-dashboard'); // Using admin as placeholder for teacher for now
+        }
 
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-                    <Button color="blue" onClick={() => setView('bm')}>🅰️ Bahasa Melayu</Button>
-                    <Button color="purple" onClick={() => setView('eng')}>🔤 English</Button>
-                    <Button color="green" onClick={() => setView('math')}>🔢 Matematik</Button>
-                    <Button color="teal" onClick={() => setView('science')}>🔬 Sains</Button>
-                    <Button color="yellow" onClick={() => setView('islamic')}>🕌 P. Islam</Button>
-                    <Button color="orange" onClick={() => setView('rewards')}>🎁 Ganjaran</Button>
-                </div>
-            </div>
-        );
+        // --- 5. INTERACTIVE LESSON / QUIZ LOGIC ---
+        function startModule(moduleId) {
+            showPage('page-lesson');
+            document.getElementById('quiz-stars').innerText = appState.childData.stars;
+            // Play intro audio sound logic goes here
+        }
 
-        // Lesson Engine Template
-        const InteractiveLesson = ({ title, items, lang, setView, addStars }) => {
-            const [step, setStep] = useState(0);
-
-            const handleNext = () => {
-                if (step < items.length - 1) {
-                    setStep(step + 1);
-                } else {
-                    addStars(10);
-                    setView('home');
-                }
-            };
-
-            return (
-                <div className="max-w-3xl mx-auto p-6 pt-12">
-                    <button onClick={() => setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">
-                        ⬅️ Kembali
-                    </button>
-                    
-                    <Card>
-                        <h2 className="text-3xl font-black text-center text-blue-500 mb-8">{title}</h2>
-                        
-                        <div 
-                            className="text-center cursor-pointer mb-10 bounce-hover"
-                            onClick={() => {
-                                playSound(items[step].word, lang);
-                                playSfx('pop');
-                            }}
-                        >
-                            <div className="text-[10rem] mb-4 float leading-none">{items[step].image}</div>
-                            <h3 className="text-6xl font-black text-gray-800 mb-4">{items[step].word}</h3>
-                            <p className="text-3xl font-bold text-blue-400 bg-blue-50 inline-block px-8 py-3 rounded-full border-2 border-blue-100">
-                                {items[step].syllables || items[step].translation}
-                            </p>
-                        </div>
-
-                        <div className="flex justify-between items-center w-full">
-                            <div className="text-gray-400 font-bold">
-                                {step + 1} / {items.length}
-                            </div>
-                            <div className="w-2/3">
-                                <Button color="green" onClick={handleNext}>
-                                    {step < items.length - 1 ? "Seterusnya ➡️" : "Hebat! Siap! 🎉"}
-                                </Button>
-                            </div>
-                        </div>
-                    </Card>
-                </div>
-            );
-        };
-
-        const RewardsScreen = ({ setView, stars }) => (
-            <div className="max-w-4xl mx-auto p-6 pt-12">
-                <button onClick={() => setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">
-                    ⬅️ Kembali
-                </button>
+        function checkAnswer(isCorrect, btnElement) {
+            if (isCorrect) {
+                btnElement.classList.replace('border-gray-200', 'border-brandGreen');
+                btnElement.classList.replace('bg-white', 'bg-green-100');
+                btnElement.classList.add('text-green-700');
                 
-                <Card>
-                    <div className="text-center mb-8">
-                        <h2 className="text-4xl font-black text-orange-500 mb-2">Peti Harta Karun! 🏴‍☠️</h2>
-                        <p className="text-2xl font-bold text-gray-600">Bintang Anda: <span className="text-orange-500">⭐ {stars}</span></p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="bg-orange-50 p-6 rounded-[2rem] border-4 border-orange-200 text-center relative overflow-hidden">
-                            <div className="absolute top-0 right-0 bg-green-500 text-white font-bold py-1 px-4 rounded-bl-xl">Buka!</div>
-                            <div className="text-7xl mb-4 mt-4">🏆</div>
-                            <h3 className="text-2xl font-bold text-gray-800">Lencana Juara</h3>
-                            <p className="text-gray-500 mt-2">Diberikan untuk usaha gigih!</p>
-                        </div>
-                        
-                        <div className="bg-blue-50 p-6 rounded-[2rem] border-4 border-blue-200 text-center relative">
-                            <div className="absolute top-0 right-0 bg-blue-500 text-white font-bold py-1 px-4 rounded-bl-xl text-xs">Premium</div>
-                            <div className="text-7xl mb-4 mt-4">🖨️</div>
-                            <h3 className="text-2xl font-bold text-gray-800">Fail Cetakan 3D</h3>
-                            <p className="text-sm text-gray-600 mt-2 mb-4">Set Huruf Abjad Interaktif. Dioptimumkan untuk build plate 256x256x256mm.</p>
-                            <button className="bg-blue-600 text-white font-bold py-3 px-6 rounded-xl w-full hover:bg-blue-700 transition shadow-lg">
-                                Muat Turun (3MF)
-                            </button>
-                        </div>
-                    </div>
-                </Card>
-            </div>
-        );
+                // Add star & Animation
+                appState.childData.stars += 5;
+                document.getElementById('quiz-stars').innerText = appState.childData.stars;
+                showToast("Betul! Tahniah +5 Bintang", "success");
+                
+                // Simulate next question
+                setTimeout(() => {
+                    showPage('page-child-dashboard');
+                    document.getElementById('cd-stars').innerText = appState.childData.stars;
+                }, 2000);
+            } else {
+                btnElement.classList.replace('border-gray-200', 'border-red-400');
+                btnElement.classList.replace('bg-white', 'bg-red-50');
+                showToast("Cuba lagi!", "info");
+                setTimeout(() => {
+                    btnElement.classList.replace('border-red-400', 'border-gray-200');
+                    btnElement.classList.replace('bg-red-50', 'bg-white');
+                }, 1000);
+            }
+        }
 
-        // --- 5. SCREENS: PARENT MODE (Ultra Clean, Minimalist, Apple-Style) ---
-        const ParentGate = ({ setView }) => {
-            const [pin, setPin] = useState('');
-            const correctPin = '1234'; // Simulated PIN
-
-            const handlePin = (num) => {
-                const newPin = pin + num;
-                setPin(newPin);
-                if (newPin.length === 4) {
-                    if (newPin === correctPin) {
-                        document.getElementById('body-tag').classList.remove('kids-mode');
-                        document.getElementById('body-tag').classList.add('parent-mode');
-                        setView('parent_dashboard');
-                    } else {
-                        alert('PIN Salah. (Sila guna 1234)');
-                        setPin('');
-                    }
-                }
-            };
-
-            return (
-                <div className="min-h-screen flex items-center justify-center bg-white/80 backdrop-blur-md fixed inset-0 z-50">
-                    <div className="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full text-center pop-in border border-gray-100">
-                        <h2 className="text-2xl font-bold text-gray-800 mb-2">Akses Ibu Bapa</h2>
-                        <p className="text-gray-500 mb-8">Sila masukkan PIN (1234)</p>
-                        
-                        <div className="flex justify-center gap-4 mb-8">
-                            {[0,1,2,3].map(i => (
-                                <div key={i} className={`w-4 h-4 rounded-full ${pin.length > i ? 'bg-slate-800' : 'bg-gray-200'}`}></div>
-                            ))}
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-4 mb-6">
-                            {[1,2,3,4,5,6,7,8,9].map(num => (
-                                <button key={num} onClick={() => handlePin(num)} className="w-16 h-16 rounded-full bg-gray-50 text-2xl font-bold text-gray-800 hover:bg-gray-200 mx-auto transition">
-                                    {num}
-                                </button>
-                            ))}
-                            <div></div>
-                            <button onClick={() => handlePin(0)} className="w-16 h-16 rounded-full bg-gray-50 text-2xl font-bold text-gray-800 hover:bg-gray-200 mx-auto transition">0</button>
-                            <button onClick={() => setView('home')} className="w-16 h-16 rounded-full text-red-500 font-bold hover:bg-red-50 mx-auto transition">Batal</button>
-                        </div>
-                    </div>
-                </div>
-            );
+        // Initialize Check
+        window.onload = () => {
+            if (appState.currentUser) {
+                routeUser(appState.currentUser.role);
+            }
         };
-
-        const ParentDashboard = ({ setView }) => {
-            const exitDashboard = () => {
-                document.getElementById('body-tag').classList.remove('parent-mode');
-                document.getElementById('body-tag').classList.add('kids-mode');
-                setView('home');
-            };
-
-            return (
-                <div className="max-w-6xl mx-auto p-8 pt-12 pop-in">
-                    <div className="flex justify-between items-center mb-12">
-                        <div>
-                            <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">Parent Dashboard</h1>
-                            <p className="text-gray-500 mt-1">Overview of your child's learning progress.</p>
-                        </div>
-                        <button onClick={exitDashboard} className="px-6 py-2 bg-black text-white rounded-full text-sm font-medium hover:bg-gray-800 transition">
-                            Done
-                        </button>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                        {/* Stats Cards */}
-                        <div className="lg:col-span-2 grid grid-cols-2 gap-6">
-                            <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col justify-center">
-                                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Screen Time Today</h3>
-                                <p className="text-4xl font-semibold text-gray-900">45 <span className="text-xl text-gray-400 font-normal">min</span></p>
-                                <div className="w-full bg-gray-100 h-1.5 rounded-full mt-4"><div className="bg-green-500 w-2/3 h-1.5 rounded-full"></div></div>
-                            </div>
-                            <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 flex flex-col justify-center">
-                                <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wider mb-2">Total Modules Completed</h3>
-                                <p className="text-4xl font-semibold text-gray-900">12</p>
-                                <p className="text-sm text-green-500 mt-4">↑ 3 more than last week</p>
-                            </div>
-                        </div>
-
-                        {/* Recent Activity */}
-                        <div className="bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 row-span-2">
-                            <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Activity</h3>
-                            <div className="space-y-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-500">🅰️</div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Suku Kata Mudah (BM)</p>
-                                        <p className="text-xs text-gray-500">Completed with 100% score</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-purple-50 flex items-center justify-center text-purple-500">🔤</div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">English Vocabulary</p>
-                                        <p className="text-xs text-gray-500">Learned 3 new words</p>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-4">
-                                    <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center text-orange-500">⭐</div>
-                                    <div>
-                                        <p className="text-sm font-medium text-gray-900">Earned Champion Badge</p>
-                                        <p className="text-xs text-gray-500">Reward unlocked</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Content Management / 3D Resources */}
-                        <div className="lg:col-span-2 bg-white p-8 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100">
-                            <div className="flex justify-between items-center mb-6">
-                                <h3 className="text-lg font-semibold text-gray-900">Physical Learning Resources</h3>
-                                <span className="px-3 py-1 bg-black text-white text-xs font-medium rounded-full">Premium</span>
-                            </div>
-                            <p className="text-sm text-gray-500 mb-6 max-w-xl">Download and 3D print educational tools directly from the curriculum. All models are pre-sliced and optimized for 256x256x256mm build plates to ensure perfect dimensional accuracy for interlocking parts.</p>
-                            
-                            <table className="w-full text-left border-collapse">
-                                <thead>
-                                    <tr className="border-b border-gray-100">
-                                        <th className="py-3 text-xs font-medium text-gray-400 uppercase">Resource Name</th>
-                                        <th className="py-3 text-xs font-medium text-gray-400 uppercase">Format</th>
-                                        <th className="py-3 text-xs font-medium text-gray-400 uppercase text-right">Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr className="border-b border-gray-50 hover:bg-gray-50/50 transition">
-                                        <td className="py-4 text-sm font-medium text-gray-900">KSPK Alphabet Blocks Set</td>
-                                        <td className="py-4 text-sm text-gray-500">.3MF (Multi-color)</td>
-                                        <td className="py-4 text-right"><button className="text-blue-600 font-medium text-sm hover:underline">Download</button></td>
-                                    </tr>
-                                    <tr className="hover:bg-gray-50/50 transition">
-                                        <td className="py-4 text-sm font-medium text-gray-900">Fractions Puzzle Board</td>
-                                        <td className="py-4 text-sm text-gray-500">.STL (Single)</td>
-                                        <td className="py-4 text-right"><button className="text-blue-600 font-medium text-sm hover:underline">Download</button></td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        // --- 6. MAIN APP ROUTER ---
-        const App = () => {
-            const [view, setView] = useState('home');
-            const [stars, setStars] = useState(120);
-
-            const addStars = (amount) => setStars(prev => prev + amount);
-
-            // Data Kandungan Pembelajaran
-            const lessonData = {
-                bm: [
-                    { word: "Kucing", image: "🐱", syllables: "Ku - cing" },
-                    { word: "Nasi Lemak", image: "🍛", syllables: "Na - si  Le - mak" },
-                    { word: "Buku", image: "📖", syllables: "Bu - ku" }
-                ],
-                eng: [
-                    { word: "Apple", image: "🍎", translation: "Epal" },
-                    { word: "Cat", image: "🐱", translation: "Kucing" },
-                    { word: "Sun", image: "☀️", translation: "Matahari" }
-                ],
-                math: [
-                    { word: "Satu", image: "1️⃣", translation: "One Apple 🍎" },
-                    { word: "Dua", image: "2️⃣", translation: "Two Cats 🐱🐱" },
-                    { word: "Tiga", image: "3️⃣", translation: "Three Stars ⭐⭐⭐" }
-                ]
-            };
-
-            return (
-                <div className="relative">
-                    {view === 'home' && <Home setView={setView} stars={stars} />}
-                    
-                    {view === 'bm' && <InteractiveLesson title="Mari Membaca (BM)" items={lessonData.bm} lang="ms-MY" setView={setView} addStars={addStars} />}
-                    {view === 'eng' && <InteractiveLesson title="Let's Learn English" items={lessonData.eng} lang="en-US" setView={setView} addStars={addStars} />}
-                    {view === 'math' && <InteractiveLesson title="Jom Mengira" items={lessonData.math} lang="ms-MY" setView={setView} addStars={addStars} />}
-                    
-                    {view === 'science' && <div className="p-12 text-center text-2xl font-bold pop-in"><button onClick={()=>setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">⬅️ Kembali</button><br/><br/>Modul Sains Sedang Dibina... 🔬</div>}
-                    {view === 'islamic' && <div className="p-12 text-center text-2xl font-bold pop-in"><button onClick={()=>setView('home')} className="mb-6 font-bold text-gray-500 hover:text-gray-800 text-xl bg-white/50 px-4 py-2 rounded-full">⬅️ Kembali</button><br/><br/>Modul P. Islam Sedang Dibina... 🕌</div>}
-                    
-                    {view === 'rewards' && <RewardsScreen setView={setView} stars={stars} />}
-                    
-                    {view === 'parent_gate' && <ParentGate setView={setView} />}
-                    {view === 'parent_dashboard' && <ParentDashboard setView={setView} />}
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
     </script>
 </body>
 </html>
