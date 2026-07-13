@@ -5,18 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EDU KIDS MY - Belajar, Bermain dan Membesar Bersama</title>
     
-    <!-- PWA Meta Tags & Manifest -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#3B82F6">
     <link rel="apple-touch-icon" href="https://via.placeholder.com/192/3B82F6/FFFFFF?text=EK">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     
-    <!-- Fonts & Icons -->
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -36,10 +33,11 @@
         }
     </script>
 
-    <!-- Firebase (Compat for Single File SPA) -->
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
 
     <style>
         /* Custom UI Styles */
@@ -59,24 +57,24 @@
         .toast.show { transform: translateY(0); opacity: 1; }
     </style>
 </head>
-<body class="antialiased font-sans flex flex-col min-h-screen">
+<body class="antialiased font-sans flex flex-col min-h-screen relative">
 
-    <!-- Global Loader -->
+    <div id="confetti-container" class="hidden-page fixed inset-0 z-[100] pointer-events-none flex items-center justify-center">
+        <lottie-player src="https://lottie.host/28db1598-639a-4f5d-b062-b7e51c6b1d4c/3N1Q8iT272.json" background="transparent" speed="1" style="width: 100%; height: 100%;" id="confetti-player"></lottie-player>
+    </div>
+
     <div id="loader" class="hidden-page fixed inset-0 flex flex-col items-center justify-center">
         <i class="fas fa-spinner fa-spin text-6xl text-brandBlue mb-4"></i>
         <h2 class="text-2xl font-display text-brandPurple" id="loader-text">Memuatkan...</h2>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toast" class="toast fixed bottom-4 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-lg z-50 flex items-center space-x-3">
         <i id="toast-icon" class="fas fa-info-circle"></i>
         <span id="toast-msg" class="font-semibold">Mesej di sini</span>
     </div>
 
-    <!-- MAIN APP CONTAINER -->
     <div id="app-container" class="flex-grow w-full max-w-md mx-auto sm:max-w-4xl bg-white shadow-2xl overflow-hidden relative">
 
-        <!-- ================= PAGE: LANDING ================= -->
         <div id="page-landing" class="page h-full flex flex-col items-center justify-center p-6 bg-gradient-to-b from-blue-50 to-blue-200 text-center">
             <div class="mb-8 animate-bounce-soft">
                 <i class="fas fa-rocket text-8xl text-brandBlue drop-shadow-md"></i>
@@ -95,13 +93,11 @@
             </div>
         </div>
 
-        <!-- ================= PAGE: LOGIN ================= -->
         <div id="page-login" class="page hidden-page h-full flex flex-col p-6 overflow-y-auto">
             <button onclick="showPage('page-landing')" class="self-start text-gray-500 hover:text-brandBlue text-xl mb-4"><i class="fas fa-arrow-left"></i> Kembali</button>
             
             <h2 class="font-display text-3xl text-brandBlue mb-6 text-center">Log Masuk</h2>
             
-            <!-- Demo Login Buttons -->
             <div class="space-y-4 mb-8 border-b-2 pb-6 border-dashed border-gray-300">
                 <p class="text-center text-gray-500 text-sm mb-4 font-bold"><i class="fas fa-info-circle text-brandOrange"></i> Mod Demo (Tanpa Firebase)</p>
                 <button onclick="demoLogin('child')" class="w-full btn-child bg-brandGreen text-white font-bold text-lg py-3 rounded-2xl border-b-4 border-green-700"><i class="fas fa-child mr-2"></i> Masuk Sebagai Kanak-Kanak</button>
@@ -110,7 +106,6 @@
                 <button onclick="demoLogin('admin')" class="w-full btn-child bg-gray-800 text-white font-bold text-lg py-3 rounded-2xl border-b-4 border-gray-900"><i class="fas fa-cog mr-2"></i> Masuk Sebagai Admin</button>
             </div>
 
-            <!-- Firebase Login Form (UI Only for logic fallback) -->
             <form onsubmit="handleFirebaseLogin(event)" class="space-y-4">
                 <p class="text-center text-gray-500 text-sm mb-4 font-bold">Log Masuk Sistem Sebenar</p>
                 <div>
@@ -125,13 +120,11 @@
             </form>
         </div>
 
-        <!-- ================= PAGE: CHILD DASHBOARD ================= -->
         <div id="page-child-dashboard" class="page hidden-page h-full flex flex-col bg-bgSoft overflow-y-auto pb-24">
-            <!-- Header -->
             <div class="bg-brandBlue text-white p-6 rounded-b-3xl shadow-lg flex justify-between items-center relative z-10">
                 <div class="flex items-center space-x-4">
-                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center text-4xl border-4 border-brandYellow shadow-inner">
-                        🦖 <!-- Avatar Dinosaur -->
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center border-4 border-brandYellow shadow-inner overflow-hidden relative">
+                        <lottie-player src="https://lottie.host/808b29c5-8472-4d2c-aef6-921d7b32d56a/M8dE1VnL8s.json" background="transparent" speed="1" style="width: 140%; height: 140%;" loop autoplay></lottie-player>
                     </div>
                     <div>
                         <h2 class="font-display text-2xl" id="cd-greeting">Hai, Aiman!</h2>
@@ -146,36 +139,29 @@
                 </div>
             </div>
 
-            <!-- Main Content -->
             <div class="p-6 space-y-6">
                 <h3 class="font-display text-xl text-gray-700">Jom Belajar Hari Ini!</h3>
                 
-                <!-- Category Grid -->
                 <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
-                    <!-- BM -->
                     <div onclick="startModule('bm')" class="bg-brandGreen text-white p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden">
                         <i class="fas fa-book-open text-4xl mb-2 opacity-90"></i>
                         <h4 class="font-bold text-lg">Bahasa<br>Melayu</h4>
                         <div class="absolute -bottom-4 -right-4 w-16 h-16 bg-white opacity-20 rounded-full"></div>
                     </div>
-                    <!-- English -->
                     <div onclick="showToast('Modul English dibuka', 'success')" class="bg-brandPurple text-white p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden">
                         <i class="fas fa-language text-4xl mb-2 opacity-90"></i>
                         <h4 class="font-bold text-lg">English</h4>
                     </div>
-                    <!-- Math -->
                     <div onclick="showToast('Modul Matematik dibuka', 'success')" class="bg-brandOrange text-white p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden">
                         <i class="fas fa-calculator text-4xl mb-2 opacity-90"></i>
                         <h4 class="font-bold text-lg">Matematik</h4>
                     </div>
-                    <!-- Games -->
                     <div onclick="showPage('page-games')" class="bg-brandYellow text-gray-900 p-4 rounded-3xl btn-child cursor-pointer card-shadow text-center relative overflow-hidden border-2 border-yellow-400">
                         <i class="fas fa-gamepad text-4xl mb-2 opacity-90 text-orange-500"></i>
                         <h4 class="font-bold text-lg">Main Permainan</h4>
                     </div>
                 </div>
 
-                <!-- Daily Challenge -->
                 <div class="bg-white p-4 rounded-2xl card-shadow border-2 border-blue-100 flex items-center justify-between">
                     <div class="flex items-center space-x-4">
                         <div class="bg-blue-100 p-3 rounded-xl text-brandBlue text-2xl"><i class="fas fa-trophy"></i></div>
@@ -188,7 +174,6 @@
                 </div>
             </div>
             
-            <!-- Bottom Navigation -->
             <div class="fixed bottom-0 w-full max-w-md sm:max-w-4xl bg-white border-t-2 border-gray-100 flex justify-around p-3 pb-6 rounded-t-3xl shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)]">
                 <button class="flex flex-col items-center text-brandBlue"><i class="fas fa-home text-2xl mb-1"></i><span class="text-xs font-bold">Utama</span></button>
                 <button onclick="showPage('page-games')" class="flex flex-col items-center text-gray-400 hover:text-brandYellow transition-colors"><i class="fas fa-puzzle-piece text-2xl mb-1"></i><span class="text-xs font-bold">Permainan</span></button>
@@ -197,22 +182,18 @@
             </div>
         </div>
 
-        <!-- ================= PAGE: INTERACTIVE LESSON / QUIZ ================= -->
         <div id="page-lesson" class="page hidden-page h-full flex flex-col bg-white overflow-hidden">
-            <!-- Header -->
             <div class="p-4 flex justify-between items-center bg-brandGreen text-white rounded-b-2xl shadow">
                 <button onclick="showPage('page-child-dashboard')" class="text-2xl"><i class="fas fa-arrow-left"></i></button>
                 <h2 class="font-display text-xl">Mengenal Haiwan</h2>
                 <div class="bg-green-800 px-3 py-1 rounded-full text-sm font-bold"><i class="fas fa-star text-brandYellow"></i> <span id="quiz-stars">0</span></div>
             </div>
 
-            <!-- Quiz Content -->
             <div class="flex-grow flex flex-col items-center justify-center p-6 text-center">
-                <!-- Teks ini boleh ditekan untuk mengulang suara tanpa mengubah rupanya -->
                 <h3 class="text-2xl font-bold text-gray-700 mb-6 cursor-pointer" id="quiz-question" onclick="speakText(this.innerText)">Haiwan apakah ini?</h3>
                 
-                <div class="w-48 h-48 bg-gray-100 rounded-3xl mb-8 flex items-center justify-center shadow-inner text-8xl" id="quiz-visual">
-                    🐱
+                <div class="w-48 h-48 bg-gray-100 rounded-3xl mb-8 flex items-center justify-center shadow-inner overflow-hidden" id="quiz-visual">
+                    <lottie-player src="https://lottie.host/e2baea12-9c98-4c80-be3e-db98a0ab624d/q4H68A9sUe.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
                 </div>
                 
                 <div class="w-full grid grid-cols-2 gap-4" id="quiz-options">
@@ -224,7 +205,6 @@
             </div>
         </div>
 
-        <!-- ================= PAGE: PARENT DASHBOARD ================= -->
         <div id="page-parent-dashboard" class="page hidden-page h-full flex flex-col bg-gray-50 overflow-y-auto">
             <div class="bg-brandPurple text-white p-6 shadow-md">
                 <div class="flex justify-between items-center mb-4">
@@ -235,10 +215,11 @@
             </div>
             
             <div class="p-6 space-y-6">
-                <!-- Child Card -->
                 <div class="bg-white rounded-xl card-shadow p-4 border border-gray-100 flex items-center justify-between">
                     <div class="flex items-center space-x-4">
-                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center text-2xl">🦖</div>
+                        <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center overflow-hidden">
+                            <lottie-player src="https://lottie.host/808b29c5-8472-4d2c-aef6-921d7b32d56a/M8dE1VnL8s.json" background="transparent" speed="1" style="width: 140%; height: 140%;" loop autoplay></lottie-player>
+                        </div>
                         <div>
                             <h4 class="font-bold text-lg text-gray-800">Aiman</h4>
                             <p class="text-sm text-gray-500">Umur: 5 Tahun • <span class="text-brandOrange font-bold"><i class="fas fa-star"></i> 120 Bintang</span></p>
@@ -247,7 +228,6 @@
                     <button class="text-brandBlue"><i class="fas fa-chevron-right"></i></button>
                 </div>
 
-                <!-- Statistics -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-white p-4 rounded-xl card-shadow border border-gray-100 text-center">
                         <i class="fas fa-clock text-3xl text-brandGreen mb-2"></i>
@@ -269,7 +249,6 @@
             </div>
         </div>
 
-        <!-- ================= PAGE: ADMIN DASHBOARD ================= -->
         <div id="page-admin-dashboard" class="page hidden-page h-full flex flex-col bg-gray-100 overflow-y-auto">
             <div class="bg-gray-800 text-white p-6 shadow-md flex justify-between items-center">
                 <h2 class="font-bold text-xl"><i class="fas fa-cogs mr-2"></i> Admin Panel</h2>
@@ -301,7 +280,6 @@
 
     </div>
 
-    <!-- ================= JAVASCRIPT ================= -->
     <script>
         // --- 1. FIREBASE CONFIGURATION ---
         const firebaseConfig = {
@@ -364,7 +342,6 @@
             appState.lang = lang;
             localStorage.setItem('lang', lang);
             showToast(lang === 'BM' ? 'Bahasa ditukar ke Bahasa Melayu' : 'Language switched to English', 'success');
-            // Guna Text-to-Speech untuk memberitahu pertukaran bahasa
             speakText(lang === 'BM' ? 'Bahasa Melayu' : 'English');
         }
 
@@ -408,15 +385,10 @@
         // --- 5. TEXT-TO-SPEECH (Web Speech API) ---
         function speakText(text) {
             if ('speechSynthesis' in window) {
-                // Hentikan sebutan sebelumnya jika ada
                 window.speechSynthesis.cancel();
                 
                 const utterance = new SpeechSynthesisUtterance(text);
-                
-                // Tetapan suara mengikut bahasa aplikasi (BM atau English)
                 utterance.lang = appState.lang === 'BM' ? 'ms-MY' : 'en-US';
-                
-                // Mesra kanak-kanak: kelajuan lebih perlahan sikit dan nada ceria
                 utterance.pitch = 1.2;
                 utterance.rate = 0.9;
                 
@@ -426,19 +398,17 @@
             }
         }
 
-        // --- 6. INTERACTIVE LESSON / QUIZ LOGIC ---
+        // --- 6. INTERACTIVE LESSON / QUIZ LOGIC (WITH LOTTIE CONFETTI) ---
         function startModule(moduleId) {
             showPage('page-lesson');
             document.getElementById('quiz-stars').innerText = appState.childData.stars;
             
-            // Baca soalan secara automatik apabila kuiz dibuka
             setTimeout(() => {
                 speakText(document.getElementById('quiz-question').innerText);
             }, 500);
         }
 
         function checkAnswer(isCorrect, btnElement) {
-            // Sebut pilihan yang ditekan oleh kanak-kanak
             speakText(btnElement.innerText);
 
             if (isCorrect) {
@@ -450,19 +420,27 @@
                 document.getElementById('quiz-stars').innerText = appState.childData.stars;
                 showToast("Betul! Tahniah +5 Bintang", "success");
                 
-                // Audio maklum balas betul
+                // Mula Animasi Confetti Lottie
+                const confettiContainer = document.getElementById('confetti-container');
+                const confettiPlayer = document.getElementById('confetti-player');
+                confettiContainer.classList.remove('hidden-page');
+                confettiPlayer.play();
+                
                 setTimeout(() => { speakText(appState.lang === 'BM' ? "Tahniah! Jawapan betul." : "Correct! Good job."); }, 800);
                 
                 setTimeout(() => {
+                    // Berhenti dan sembunyikan animasi Confetti sebelum kembali ke dashboard
+                    confettiContainer.classList.add('hidden-page');
+                    confettiPlayer.stop();
+                    
                     showPage('page-child-dashboard');
                     document.getElementById('cd-stars').innerText = appState.childData.stars;
-                }, 2800); // Masa dipanjangkan sedikit supaya audio sempat dihabiskan
+                }, 2800); 
             } else {
                 btnElement.classList.replace('border-gray-200', 'border-red-400');
                 btnElement.classList.replace('bg-white', 'bg-red-50');
                 showToast("Cuba lagi!", "info");
                 
-                // Audio maklum balas salah
                 setTimeout(() => { speakText(appState.lang === 'BM' ? "Cuba lagi" : "Try again"); }, 800);
 
                 setTimeout(() => {
