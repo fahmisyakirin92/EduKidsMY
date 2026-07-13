@@ -182,10 +182,27 @@
             </div>
         </div>
 
-        <div id="page-lesson" class="page hidden-page h-full flex flex-col bg-white overflow-hidden">
-            <div class="p-4 flex justify-between items-center bg-brandGreen text-white rounded-b-2xl shadow">
+        <div id="page-bm-levels" class="page hidden-page h-full flex flex-col bg-bgSoft overflow-y-auto pb-24">
+            <div class="p-4 flex justify-between items-center bg-brandBlue text-white rounded-b-2xl shadow relative z-10">
                 <button onclick="showPage('page-child-dashboard')" class="text-2xl"><i class="fas fa-arrow-left"></i></button>
-                <h2 class="font-display text-xl">Mengenal Haiwan</h2>
+                <h2 class="font-display text-xl">Modul Bahasa Melayu</h2>
+                <div class="bg-blue-800 px-3 py-1 rounded-full text-sm font-bold"><i class="fas fa-star text-brandYellow"></i> <span id="bm-stars">120</span></div>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="bg-white p-4 rounded-2xl shadow-sm border-l-4 border-brandYellow mb-4">
+                    <p class="text-gray-700 font-bold text-sm"><i class="fas fa-info-circle text-brandBlue"></i> Kurikulum KSPK Prasekolah (Tahap Adaptif)</p>
+                </div>
+                
+                <div id="bm-levels-container" class="grid grid-cols-1 gap-4">
+                    </div>
+            </div>
+        </div>
+
+        <div id="page-lesson" class="page hidden-page h-full flex flex-col bg-white overflow-hidden">
+            <div class="p-4 flex justify-between items-center bg-brandGreen text-white rounded-b-2xl shadow" id="quiz-header">
+                <button onclick="showPage('page-bm-levels')" class="text-2xl"><i class="fas fa-arrow-left"></i></button>
+                <h2 class="font-display text-xl" id="quiz-lesson-title">Mengenal Haiwan</h2>
                 <div class="bg-green-800 px-3 py-1 rounded-full text-sm font-bold"><i class="fas fa-star text-brandYellow"></i> <span id="quiz-stars">0</span></div>
             </div>
 
@@ -292,7 +309,6 @@
             appId: "1:684848089074:web:5bb13ac77a2f9fd8b88d6b"
         };
 
-        // Initialize Firebase safely
         let auth, db;
         try {
             firebase.initializeApp(firebaseConfig);
@@ -303,12 +319,26 @@
             console.error("Firebase init error (using Local Storage fallback): ", error);
         }
 
-        // --- 2. APP STATE & LOCAL STORAGE FALLBACK ---
+        // --- 2. APP STATE & KSPK CURRICULUM DATA ---
         let appState = {
             lang: localStorage.getItem('lang') || 'BM',
             currentUser: JSON.parse(localStorage.getItem('user')) || null,
-            childData: { name: 'Aiman', stars: 120, level: 3 } // Demo data
+            childData: { name: 'Aiman', stars: 120, level: 3 }
         };
+
+        // Kurikulum KSPK Level 1 - 10
+        const kspkCurriculum = [
+            { id: 1, title: "Level 1: Kenal Bahasa", desc: "Mendengar bunyi & arahan", icon: "fa-ear-listen", color: "bg-brandGreen", txt: "text-white" },
+            { id: 2, title: "Level 2: Huruf A-Z", desc: "Kenal huruf besar & kecil", icon: "fa-font", color: "bg-brandPurple", txt: "text-white" },
+            { id: 3, title: "Level 3: Fonik", desc: "Bunyi sebenar huruf", icon: "fa-music", color: "bg-brandOrange", txt: "text-white" },
+            { id: 4, title: "Level 4: Suku Kata", desc: "Membaca KV (ba, bi, bu)", icon: "fa-book-open", color: "bg-brandBlue", txt: "text-white" },
+            { id: 5, title: "Level 5: Perkataan", desc: "baba, buku, baju", icon: "fa-spell-check", color: "bg-brandYellow", txt: "text-gray-900" },
+            { id: 6, title: "Level 6: Tema KSPK", desc: "Haiwan, Buah, Keluarga...", icon: "fa-globe", color: "bg-brandGreen", txt: "text-white" },
+            { id: 7, title: "Level 7: Ayat Mudah", desc: "Saya Ali. Ini bola.", icon: "fa-align-left", color: "bg-brandPurple", txt: "text-white" },
+            { id: 8, title: "Level 8: Cerita", desc: "Arnab & Kura-kura", icon: "fa-book", color: "bg-brandOrange", txt: "text-white" },
+            { id: 9, title: "Level 9: Menulis", desc: "Tracing huruf & perkataan", icon: "fa-pen", color: "bg-brandBlue", txt: "text-white" },
+            { id: 10, title: "Level 10: Komunikasi", desc: "Bercerita & Menjawab", icon: "fa-comments", color: "bg-brandYellow", txt: "text-gray-900" }
+        ];
 
         // --- 3. UI FUNCTIONS ---
         function showPage(pageId) {
@@ -328,12 +358,8 @@
 
         function showToast(message, type = 'info') {
             const toast = document.getElementById('toast');
-            const msgEl = document.getElementById('toast-msg');
-            const iconEl = document.getElementById('toast-icon');
-            
-            msgEl.innerText = message;
-            iconEl.className = type === 'success' ? 'fas fa-check-circle text-green-400' : 'fas fa-info-circle text-blue-400';
-            
+            document.getElementById('toast-msg').innerText = message;
+            document.getElementById('toast-icon').className = type === 'success' ? 'fas fa-check-circle text-green-400' : 'fas fa-info-circle text-blue-400';
             toast.classList.add('show');
             setTimeout(() => toast.classList.remove('show'), 3000);
         }
@@ -378,33 +404,103 @@
         function routeUser(role) {
             if (role === 'child') showPage('page-child-dashboard');
             else if (role === 'parent') showPage('page-parent-dashboard');
-            else if (role === 'admin') showPage('page-admin-dashboard');
-            else if (role === 'teacher') showPage('page-admin-dashboard'); 
+            else if (role === 'admin' || role === 'teacher') showPage('page-admin-dashboard'); 
         }
 
         // --- 5. TEXT-TO-SPEECH (Web Speech API) ---
         function speakText(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
-                
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.lang = appState.lang === 'BM' ? 'ms-MY' : 'en-US';
                 utterance.pitch = 1.2;
                 utterance.rate = 0.9;
-                
                 window.speechSynthesis.speak(utterance);
-            } else {
-                console.warn("Web Speech API tidak disokong pada pelayar ini.");
             }
         }
 
-        // --- 6. INTERACTIVE LESSON / QUIZ LOGIC (WITH LOTTIE CONFETTI) ---
+        // --- 6. INTERACTIVE LESSON / QUIZ LOGIC (WITH KSPK DYNAMICS) ---
         function startModule(moduleId) {
+            if(moduleId === 'bm') {
+                document.getElementById('bm-stars').innerText = appState.childData.stars;
+                renderKSPKLevels();
+                showPage('page-bm-levels');
+                speakText("Pilih tahap pembelajaran anda");
+            } else {
+                showToast('Modul sedang dikemas kini', 'info');
+            }
+        }
+
+        function renderKSPKLevels() {
+            const container = document.getElementById('bm-levels-container');
+            container.innerHTML = '';
+            
+            kspkCurriculum.forEach(level => {
+                const btn = document.createElement('div');
+                btn.className = `${level.color} ${level.txt} p-4 rounded-3xl btn-child cursor-pointer card-shadow flex items-center space-x-4`;
+                btn.onclick = () => openBMLesson(level.id);
+                btn.innerHTML = `
+                    <div class="bg-white bg-opacity-30 w-14 h-14 rounded-full flex items-center justify-center text-2xl flex-shrink-0">
+                        <i class="fas ${level.icon}"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-lg leading-tight mb-1">${level.title}</h4>
+                        <p class="text-sm opacity-90">${level.desc}</p>
+                    </div>
+                `;
+                container.appendChild(btn);
+            });
+        }
+
+        function openBMLesson(levelId) {
             showPage('page-lesson');
             document.getElementById('quiz-stars').innerText = appState.childData.stars;
             
+            const qTitle = document.getElementById('quiz-lesson-title');
+            const qText = document.getElementById('quiz-question');
+            const qVis = document.getElementById('quiz-visual');
+            const qOpts = document.getElementById('quiz-options');
+            const header = document.getElementById('quiz-header');
+            
+            // Tukar warna header mengikut KSPK (secara rawak atau spesifik)
+            header.className = "p-4 flex justify-between items-center text-white rounded-b-2xl shadow bg-brandBlue";
+
+            // Penetapan Kuiz Berdasarkan Level
+            if (levelId === 2) {
+                qTitle.innerText = "Level 2: Huruf A-Z";
+                qText.innerText = "Pilih huruf 'A'";
+                qVis.innerHTML = `<div class="text-8xl font-display text-brandPurple">A</div>`;
+                qOpts.innerHTML = `
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandPurple">B</button>
+                    <button onclick="checkAnswer(true, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandPurple">A</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandPurple">C</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow hover:border-brandPurple">M</button>
+                `;
+            } else if (levelId === 4) {
+                qTitle.innerText = "Level 4: Suku Kata";
+                qText.innerText = "Bunyi 'Ba'";
+                qVis.innerHTML = `<div class="text-6xl font-display text-brandOrange">Ba</div>`;
+                qOpts.innerHTML = `
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Bu</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Bi</button>
+                    <button onclick="checkAnswer(true, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Ba</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Be</button>
+                `;
+            } else {
+                // Default KSPK Tema Haiwan (Level 6)
+                qTitle.innerText = "Level 6: Tema KSPK";
+                qText.innerText = "Haiwan apakah ini?";
+                qVis.innerHTML = `<lottie-player src="https://lottie.host/e2baea12-9c98-4c80-be3e-db98a0ab624d/q4H68A9sUe.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>`;
+                qOpts.innerHTML = `
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Anjing</button>
+                    <button onclick="checkAnswer(true, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Kucing</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Arnab</button>
+                    <button onclick="checkAnswer(false, this)" class="btn-child bg-white border-2 border-gray-200 text-xl font-bold text-gray-700 py-4 rounded-2xl w-full card-shadow">Singa</button>
+                `;
+            }
+
             setTimeout(() => {
-                speakText(document.getElementById('quiz-question').innerText);
+                speakText(qText.innerText);
             }, 500);
         }
 
@@ -420,28 +516,25 @@
                 document.getElementById('quiz-stars').innerText = appState.childData.stars;
                 showToast("Betul! Tahniah +5 Bintang", "success");
                 
-                // Mula Animasi Confetti Lottie
                 const confettiContainer = document.getElementById('confetti-container');
                 const confettiPlayer = document.getElementById('confetti-player');
                 confettiContainer.classList.remove('hidden-page');
                 confettiPlayer.play();
                 
-                setTimeout(() => { speakText(appState.lang === 'BM' ? "Tahniah! Jawapan betul." : "Correct! Good job."); }, 800);
+                setTimeout(() => { speakText("Tahniah! Jawapan betul."); }, 800);
                 
                 setTimeout(() => {
-                    // Berhenti dan sembunyikan animasi Confetti sebelum kembali ke dashboard
                     confettiContainer.classList.add('hidden-page');
                     confettiPlayer.stop();
-                    
-                    showPage('page-child-dashboard');
-                    document.getElementById('cd-stars').innerText = appState.childData.stars;
+                    showPage('page-bm-levels');
+                    document.getElementById('bm-stars').innerText = appState.childData.stars;
                 }, 2800); 
             } else {
                 btnElement.classList.replace('border-gray-200', 'border-red-400');
                 btnElement.classList.replace('bg-white', 'bg-red-50');
                 showToast("Cuba lagi!", "info");
                 
-                setTimeout(() => { speakText(appState.lang === 'BM' ? "Cuba lagi" : "Try again"); }, 800);
+                setTimeout(() => { speakText("Cuba lagi"); }, 800);
 
                 setTimeout(() => {
                     btnElement.classList.replace('border-red-400', 'border-gray-200');
