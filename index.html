@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>EDU KIDS MY - Belajar, Bermain dan Membesar Bersama</title>
     
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#3B82F6">
+    <link rel="apple-touch-icon" href="https://via.placeholder.com/192/3B82F6/FFFFFF?text=EK">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&family=Fredoka+One&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -327,7 +333,6 @@
             appState.lang = lang;
             localStorage.setItem('lang', lang);
             showToast(lang === 'BM' ? 'Bahasa ditukar ke Bahasa Melayu' : 'Language switched to English', 'success');
-            // Nota: Implementasi penuh akan memuat semula label JSON untuk semua teks.
         }
 
         // --- 4. AUTHENTICATION & DEMO LOGIN ---
@@ -346,7 +351,6 @@
         function handleFirebaseLogin(e) {
             e.preventDefault();
             showLoading();
-            // Fallback since we are not connecting real auth in demo HTML easily without real credentials
             setTimeout(() => {
                 hideLoading();
                 showToast("Ini adalah demo. Sila gunakan butang Demo untuk melihat UI.", "info");
@@ -365,14 +369,13 @@
             if (role === 'child') showPage('page-child-dashboard');
             else if (role === 'parent') showPage('page-parent-dashboard');
             else if (role === 'admin') showPage('page-admin-dashboard');
-            else if (role === 'teacher') showPage('page-admin-dashboard'); // Using admin as placeholder for teacher for now
+            else if (role === 'teacher') showPage('page-admin-dashboard'); 
         }
 
         // --- 5. INTERACTIVE LESSON / QUIZ LOGIC ---
         function startModule(moduleId) {
             showPage('page-lesson');
             document.getElementById('quiz-stars').innerText = appState.childData.stars;
-            // Play intro audio sound logic goes here
         }
 
         function checkAnswer(isCorrect, btnElement) {
@@ -381,12 +384,10 @@
                 btnElement.classList.replace('bg-white', 'bg-green-100');
                 btnElement.classList.add('text-green-700');
                 
-                // Add star & Animation
                 appState.childData.stars += 5;
                 document.getElementById('quiz-stars').innerText = appState.childData.stars;
                 showToast("Betul! Tahniah +5 Bintang", "success");
                 
-                // Simulate next question
                 setTimeout(() => {
                     showPage('page-child-dashboard');
                     document.getElementById('cd-stars').innerText = appState.childData.stars;
@@ -408,6 +409,19 @@
                 routeUser(appState.currentUser.role);
             }
         };
+
+        // --- 6. PWA SERVICE WORKER REGISTRATION ---
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(registration => {
+                        console.log('ServiceWorker pendaftaran berjaya dengan skop: ', registration.scope);
+                    })
+                    .catch(err => {
+                        console.error('ServiceWorker pendaftaran gagal: ', err);
+                    });
+            });
+        }
     </script>
 </body>
 </html>
